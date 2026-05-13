@@ -134,7 +134,7 @@ export default function TournamentPage() {
                                   <span className={`w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold ${idx < 2 ? 'bg-tennis-yellow text-tennis-green-dark' : 'bg-muted text-muted-foreground'}`}>
                                     {idx + 1}
                                   </span>
-                                  {s.player.name}
+                                  {s.player.firstName} {s.player.lastName}
                                 </div>
                               </td>
                               <td className="text-center px-2 py-2.5 font-semibold text-green-600">{s.w}</td>
@@ -154,8 +154,8 @@ export default function TournamentPage() {
                           <button
                             key={idx}
                             onClick={() => setScoreModal({
-                              p1: group.players[r.p1].name,
-                              p2: group.players[r.p2].name,
+                              p1: `${group.players[r.p1].firstName} ${group.players[r.p1].lastName}`,
+                              p2: `${group.players[r.p2].firstName} ${group.players[r.p2].lastName}`,
                               score: r.score,
                             })}
                             className="w-full flex items-center justify-between text-xs bg-muted/50 hover:bg-muted rounded-lg px-3 py-1.5 transition-colors match-cell"
@@ -185,8 +185,8 @@ export default function TournamentPage() {
                       <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">Финал</div>
                       <button
                         onClick={() => setScoreModal({
-                          p1: results.playoff.final.p1.name,
-                          p2: results.playoff.final.p2.name,
+                          p1: `${results.playoff.final.p1.firstName} ${results.playoff.final.p1.lastName}`,
+                          p2: `${results.playoff.final.p2.firstName} ${results.playoff.final.p2.lastName}`,
                           score: results.playoff.final.score,
                         })}
                         className="w-full match-cell"
@@ -195,7 +195,7 @@ export default function TournamentPage() {
                           <div className={`flex items-center justify-between px-4 py-3 ${results.playoff.final.winner.id === results.playoff.final.p1.id ? 'bg-tennis-yellow/30 font-bold' : 'bg-background'}`}>
                             <div className="flex items-center gap-2">
                               {results.playoff.final.winner.id === results.playoff.final.p1.id && <Icon name="Crown" size={14} className="text-tennis-yellow" />}
-                              <span className="text-sm">{results.playoff.final.p1.name}</span>
+                              <span className="text-sm">{results.playoff.final.p1.firstName} {results.playoff.final.p1.lastName}</span>
                             </div>
                           </div>
                           <div className="border-t border-tennis-yellow/30 text-center py-1 text-xs font-bold text-tennis-green bg-tennis-yellow/10">
@@ -204,7 +204,7 @@ export default function TournamentPage() {
                           <div className={`flex items-center justify-between px-4 py-3 ${results.playoff.final.winner.id === results.playoff.final.p2.id ? 'bg-tennis-yellow/30 font-bold' : 'bg-background'}`}>
                             <div className="flex items-center gap-2">
                               {results.playoff.final.winner.id === results.playoff.final.p2.id && <Icon name="Crown" size={14} className="text-tennis-yellow" />}
-                              <span className="text-sm">{results.playoff.final.p2.name}</span>
+                              <span className="text-sm">{results.playoff.final.p2.firstName} {results.playoff.final.p2.lastName}</span>
                             </div>
                           </div>
                         </div>
@@ -215,21 +215,21 @@ export default function TournamentPage() {
                         <div className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">Матч за 3-е место</div>
                         <button
                           onClick={() => setScoreModal({
-                            p1: results.playoff.thirdPlace!.p1.name,
-                            p2: results.playoff.thirdPlace!.p2.name,
+                            p1: `${results.playoff.thirdPlace!.p1.firstName} ${results.playoff.thirdPlace!.p1.lastName}`,
+                            p2: `${results.playoff.thirdPlace!.p2.firstName} ${results.playoff.thirdPlace!.p2.lastName}`,
                             score: results.playoff.thirdPlace!.score,
                           })}
                           className="w-full match-cell"
                         >
                           <div className="border border-border rounded-xl overflow-hidden">
                             <div className={`flex items-center px-4 py-3 text-sm ${results.playoff.thirdPlace.winner.id === results.playoff.thirdPlace.p1.id ? 'font-bold' : ''}`}>
-                              {results.playoff.thirdPlace.p1.name}
+                              {results.playoff.thirdPlace.p1.firstName} {results.playoff.thirdPlace.p1.lastName}
                             </div>
                             <div className="border-t border-border text-center py-1 text-xs font-bold text-tennis-green bg-muted/50">
                               {results.playoff.thirdPlace.score}
                             </div>
                             <div className={`flex items-center px-4 py-3 text-sm ${results.playoff.thirdPlace.winner.id === results.playoff.thirdPlace.p2.id ? 'font-bold' : ''}`}>
-                              {results.playoff.thirdPlace.p2.name}
+                              {results.playoff.thirdPlace.p2.firstName} {results.playoff.thirdPlace.p2.lastName}
                             </div>
                           </div>
                         </button>
@@ -258,12 +258,12 @@ export default function TournamentPage() {
           {PLAYERS.slice(0, tournament.currentPlayers).map((p, i) => (
             <div key={p.id} className="flex items-center gap-4 px-5 py-3.5 border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
               <span className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground">{i + 1}</span>
-              <div className="w-9 h-9 rounded-full bg-tennis-green/10 flex items-center justify-center shrink-0">
-                <Icon name="User" size={18} className="text-tennis-green" />
+              <div className="w-9 h-9 rounded-full bg-tennis-green/10 flex items-center justify-center shrink-0 text-lg">
+                {p.emoji || '🎾'}
               </div>
               <div className="flex-1">
-                <div className="font-semibold text-sm">{p.name}</div>
-                <div className="text-xs text-muted-foreground">{p.age} лет · {p.city}</div>
+                <div className="font-semibold text-sm">{p.firstName} {p.lastName}</div>
+                <div className="text-xs text-muted-foreground">«{p.nickname}» · {p.city}</div>
               </div>
               <div className="text-right">
                 <div className="font-bold text-sm text-tennis-green">{p.rating} оч.</div>
@@ -309,12 +309,30 @@ export default function TournamentPage() {
                         {s.place}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-medium">{s.player.name}</td>
+                    <td className="px-4 py-3 font-medium">{s.player.firstName} {s.player.lastName}</td>
                     <td className="px-4 py-3 text-right font-bold text-tennis-green">+{s.points}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tournament gallery */}
+      {tournament.photos && tournament.photos.length > 0 && (
+        <div className="mt-8">
+          <h2 className="font-oswald text-xl font-bold text-tennis-green mb-4 flex items-center gap-2">
+            <Icon name="Camera" size={20} />
+            Фотогалерея турнира
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {tournament.photos.map(photo => (
+              <div key={photo.id} className="aspect-square rounded-xl overflow-hidden bg-muted group cursor-pointer card-hover">
+                <img src={photo.url} alt={photo.caption}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              </div>
+            ))}
           </div>
         </div>
       )}

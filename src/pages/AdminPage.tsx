@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
-import { TOURNAMENTS, VENUES, PLAYERS } from '@/data/mockData';
+import { TOURNAMENTS, VENUES, SITE_CONTACTS } from '@/data/mockData';
+import { getSession, getPlayers, logout } from '@/data/authStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-type AdminTab = 'tournaments' | 'venues' | 'players';
+type AdminTab = 'tournaments' | 'venues' | 'players' | 'contacts';
 
 const statusMeta = (status: string) => {
   if (status === 'registration') return { label: 'Регистрация', cls: 'bg-tennis-yellow text-tennis-green-dark' };
@@ -15,9 +17,17 @@ const statusMeta = (status: string) => {
 };
 
 export default function AdminPage() {
+  const navigate = useNavigate();
+  const session = getSession();
+  const PLAYERS = getPlayers();
   const [tab, setTab] = useState<AdminTab>('tournaments');
   const [showCreateTournament, setShowCreateTournament] = useState(false);
   const [showCreateVenue, setShowCreateVenue] = useState(false);
+  const [editRatingModal, setEditRatingModal] = useState<{ id: number; name: string; current: number } | null>(null);
+  const [ratingChange, setRatingChange] = useState('');
+  const [ratingReason, setRatingReason] = useState('');
+  const [contacts, setContacts] = useState({ ...SITE_CONTACTS });
+  const [contactsSaved, setContactsSaved] = useState(false);
   const [newTournament, setNewTournament] = useState({
     name: '', city: 'Нижний Новгород', venueId: '1', dateStart: '', dateEnd: '',
     registrationDeadline: '', ageGroup: '10-16', category: 'Любительский',
@@ -27,10 +37,16 @@ export default function AdminPage() {
     name: '', city: 'Нижний Новгород', address: '', type: 'outdoor', courts: '2',
   });
 
+  if (session?.role !== 'admin') {
+    navigate('/auth');
+    return null;
+  }
+
   const TABS = [
     { key: 'tournaments', label: 'Турниры', icon: 'Trophy', count: TOURNAMENTS.length },
     { key: 'venues', label: 'Площадки', icon: 'MapPin', count: VENUES.length },
-    { key: 'players', label: 'Игроки', icon: 'Users', count: PLAYERS.length },
+    { key: 'players', label: 'Игроки + пароли', icon: 'Users', count: PLAYERS.length },
+    { key: 'contacts', label: 'Контакты', icon: 'Phone', count: 0 },
   ];
 
   return (
@@ -47,10 +63,17 @@ export default function AdminPage() {
               <div className="text-white/50 text-xs">Панель управления</div>
             </div>
           </div>
-          <a href="/" className="text-white/60 hover:text-white text-sm flex items-center gap-1 transition-colors">
-            <Icon name="ExternalLink" size={14} />
-            Сайт
-          </a>
+          <div className="flex items-center gap-3">
+            <a href="/" className="text-white/60 hover:text-white text-sm flex items-center gap-1 transition-colors">
+              <Icon name="ExternalLink" size={14} />
+              Сайт
+            </a>
+            <button onClick={() => { logout(); navigate('/auth'); }}
+              className="text-white/60 hover:text-red-300 text-sm flex items-center gap-1 transition-colors">
+              <Icon name="LogOut" size={14} />
+              Выйти
+            </button>
+          </div>
         </div>
       </div>
 
@@ -185,47 +208,133 @@ export default function AdminPage() {
         {tab === 'players' && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-lg">Игроки</h2>
+              <h2 className="font-bold text-lg">Игроки и пароли</h2>
+              <span className="text-xs text-muted-foreground bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-lg">🔒 Только для администратора</span>
             </div>
             <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Игрок</th>
-                    <th className="text-center px-3 py-3 font-semibold text-muted-foreground hidden sm:table-cell">Возраст</th>
-                    <th className="text-center px-3 py-3 font-semibold text-muted-foreground hidden md:table-cell">Тренер</th>
-                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Очков</th>
-                    <th className="text-center px-3 py-3 font-semibold text-muted-foreground">Действия</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {PLAYERS.map(p => (
-                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="font-semibold">{p.name}</div>
-                        <div className="text-xs text-muted-foreground">{p.city}</div>
-                      </td>
-                      <td className="px-3 py-3 text-center hidden sm:table-cell">{p.age}</td>
-                      <td className="px-3 py-3 text-center text-muted-foreground hidden md:table-cell">{p.coach}</td>
-                      <td className="px-4 py-3 text-right font-bold text-tennis-green">{p.rating}</td>
-                      <td className="px-3 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button className="p-1.5 text-muted-foreground hover:text-tennis-green hover:bg-tennis-green/10 rounded-lg transition-colors">
-                            <Icon name="Pencil" size={14} />
-                          </button>
-                          <button className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                            <Icon name="Trash2" size={14} />
-                          </button>
-                        </div>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Игрок</th>
+                      <th className="text-center px-3 py-3 font-semibold text-muted-foreground">Никнейм</th>
+                      <th className="text-center px-3 py-3 font-semibold text-muted-foreground hidden sm:table-cell">Пол</th>
+                      <th className="text-center px-3 py-3 font-semibold text-muted-foreground hidden md:table-cell">Пароль</th>
+                      <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Очков</th>
+                      <th className="text-center px-3 py-3 font-semibold text-muted-foreground">Действия</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {PLAYERS.map(p => (
+                      <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{p.emoji}</span>
+                            <div>
+                              <div className="font-semibold">{p.firstName} {p.lastName}</div>
+                              <div className="text-xs text-muted-foreground">{p.city}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-center text-muted-foreground">«{p.nickname}»</td>
+                        <td className="px-3 py-3 text-center hidden sm:table-cell">{p.gender === 'male' ? '♂' : '♀'}</td>
+                        <td className="px-3 py-3 text-center hidden md:table-cell">
+                          <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono">{p.password}</code>
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-tennis-green">{p.rating}</td>
+                        <td className="px-3 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => { setEditRatingModal({ id: p.id, name: `${p.firstName} ${p.lastName}`, current: p.rating }); setRatingChange(''); setRatingReason(''); }}
+                              className="p-1.5 text-muted-foreground hover:text-tennis-green hover:bg-tennis-green/10 rounded-lg transition-colors" title="Изменить рейтинг">
+                              <Icon name="Star" size={14} />
+                            </button>
+                            <button className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                              <Icon name="Trash2" size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {PLAYERS.length === 0 && (
+                <div className="py-12 text-center text-muted-foreground text-sm">Нет зарегистрированных игроков</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Contacts */}
+        {tab === 'contacts' && (
+          <div className="max-w-lg">
+            <h2 className="font-bold text-lg mb-4">Контактная информация сайта</h2>
+            {contactsSaved && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-sm text-green-700 flex items-center gap-2">
+                <Icon name="CheckCircle" size={15} />Контакты сохранены
+              </div>
+            )}
+            <div className="bg-white rounded-2xl border border-border shadow-sm p-6 space-y-4">
+              <div>
+                <label className="text-sm font-semibold mb-1.5 block">Телефон</label>
+                <Input value={contacts.phone} onChange={e => setContacts(c => ({ ...c, phone: e.target.value }))} placeholder="+7 (831) 000-00-00" />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1.5 block">Email</label>
+                <Input value={contacts.email} onChange={e => setContacts(c => ({ ...c, email: e.target.value }))} placeholder="info@ldttnn.ru" />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1.5 block">Telegram</label>
+                <Input value={contacts.telegram} onChange={e => setContacts(c => ({ ...c, telegram: e.target.value }))} placeholder="https://t.me/ldttnn" />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1.5 block">ВКонтакте</label>
+                <Input value={contacts.vk} onChange={e => setContacts(c => ({ ...c, vk: e.target.value }))} placeholder="https://vk.com/ldttnn" />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1.5 block">Адрес</label>
+                <Input value={contacts.address} onChange={e => setContacts(c => ({ ...c, address: e.target.value }))} placeholder="г. Нижний Новгород, ул. ..." />
+              </div>
+              <Button onClick={() => { Object.assign(SITE_CONTACTS, contacts); setContactsSaved(true); setTimeout(() => setContactsSaved(false), 3000); }}
+                className="w-full bg-tennis-green hover:bg-tennis-green-light text-white">
+                Сохранить контакты
+              </Button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Edit Rating Modal */}
+      <Dialog open={!!editRatingModal} onOpenChange={() => setEditRatingModal(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-oswald text-tennis-green">Изменить рейтинг</DialogTitle>
+          </DialogHeader>
+          {editRatingModal && (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-xl p-3 text-sm">
+                <div className="font-semibold">{editRatingModal.name}</div>
+                <div className="text-muted-foreground">Текущий рейтинг: {editRatingModal.current} очков</div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1.5 block">Изменение (например: +5 или -3)</label>
+                <Input value={ratingChange} onChange={e => setRatingChange(e.target.value)} placeholder="+5" />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1.5 block">Причина *</label>
+                <Input value={ratingReason} onChange={e => setRatingReason(e.target.value)} placeholder="Ручная корректировка по итогам..." />
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setEditRatingModal(null)} className="flex-1">Отмена</Button>
+                <Button onClick={() => setEditRatingModal(null)} disabled={!ratingReason} className="flex-1 bg-tennis-green text-white hover:bg-tennis-green-light">
+                  Применить
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Create Tournament Modal */}
       <Dialog open={showCreateTournament} onOpenChange={setShowCreateTournament}>
